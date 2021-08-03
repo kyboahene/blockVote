@@ -38,13 +38,23 @@ module.exports = {
       if (!valid) throw new UserInputError('Wrong Credentials', { errors })
 
       const admin = await Voters.findOne({ email })
-      if (!admin) error.general = 'Admin not found'
-      throw new UserInputError('Wrong Credentials', { errors })
+
+      if (!admin) {
+        errors.general = 'Admin not found'
+        throw new UserInputError('Admin Not found', { errors })
+      }
+
+      const equal = password.localeCompare(admin.password)
+      console.log(equal)
+      if (equal !== 0) {
+        errors.general = 'Wrong password'
+        throw new UserInputError('Wrong Credentials', { errors })
+      }
 
       const token = generateToken(admin)
       return {
         ...admin._doc,
-        id: user._id,
+        id: admin._id,
         token,
       }
     },

@@ -9,7 +9,7 @@ module.exports.validLoginInput = (email, password) => {
     }
   }
 
-  if (password == '') {
+  if (password.trim() == '') {
     errors.password = 'Password is required'
   }
 
