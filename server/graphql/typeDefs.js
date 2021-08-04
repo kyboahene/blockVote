@@ -7,8 +7,17 @@ module.exports = gql`
   }
 
   type Mutation {
-    AdminLogin(email: String!, password: String!): Voter!
-    VoterLogin(voterID: String!, voterKey: String!): Voter!
+    AdminLogin(email: String!, password: String!): LoggedIn!
+    VoterLogin(voterID: String!, voterKey: String!): LoggedIn!
+  }
+
+  type LoggedIn {
+    id: ID!
+    name: String!
+    email: String!
+    PollingStation: String
+    Constituency: String
+    token: String!
   }
 
   type Voter {
@@ -17,6 +26,5 @@ module.exports = gql`
     email: String!
     PollingStation: String!
     Constituency: String!
-    token: String!
   }
 `

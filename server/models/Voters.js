@@ -34,6 +34,7 @@ const VoterSchema = new Schema({
   },
   type: {
     type: String,
+    default: 'User',
   },
 })
 
