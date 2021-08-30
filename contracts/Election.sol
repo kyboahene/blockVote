@@ -13,10 +13,12 @@ contract Election {
     struct Voter {  
         uint id;
         string name;
+        uint voterId;
         uint age;
         string phone;
         string pollingStation;
         string constituency;
+        bytes32 password;
         string region;
         bool voted;
         bool authorized;
@@ -28,25 +30,26 @@ contract Election {
         string password;
     }
 
-    //owner
-    address public owner;
+    struct ElectionDetails{
+        address owner;
+        string  electionName;
+        string  description;
+        uint  startDate;
+        uint  endDate; 
+        uint totalVotes;
+    }
 
-    string public electionName;
-    uint public startDate;
-    uint public endDate;
 
     uint public votersCount = 0;
-
     //candidate count
     uint public candidatesCount = 0;
 
     mapping(uint => Admin) public admin;
-
     //fetch candidate
     mapping(uint => Candidate) public candidates;
-
     //store accounts that has voted
     mapping(uint => Voter) public voters;
+
 
 
     event electionUpdated(
@@ -56,17 +59,12 @@ contract Election {
         uint votes
     ); 
 
-    uint public totalVotes;
-
-    modifier ownerOnly() {
-        require(msg.sender == owner);
-        _;
-    }
-
-
     constructor () public {
         addCandidate('Nana Addo', 'NPP', 'Presidential');
         addCandidate('John Mahama', 'NDC', 'Presidential' );
+        addCandidate('Christian Kwabena Andrews', 'GUM', 'Presidential');
+        addCandidate('Ivor Kobina Green', 'CPP', 'Presidential');
+        addCandidate('Akua Donkor', 'GPP', 'Presidential');
 
         LogAdmin('kyeiyaw437@gmail.com', 'password');
     }
@@ -75,39 +73,44 @@ contract Election {
         admin[0] = Admin(email, password);
     }
 
-    function AdminLogin(string memory _email, string memory _password) public {
-        string memory regEx = '/^([0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*@([0-9a-zA-Z][-\w]*[0-9a-zA-Z]\.)+[a-zA-Z]{2,9})$/';
-        if( _email.trim() == ''){
-            return "Email is required";
+
+    function election(string memory _name,  string memory _description, uint _startDate,  uint  _endDate) public view {
+        ElectionDetails memory details;
+
+        details.owner = msg.sender;
+        details.electionName = _name;
+        details.description = _description;
+        details.startDate = _startDate;
+        details.endDate = _endDate;
+    }
+
+    function getDetails()public returns (string memory electionName, string memory description, uint startDate, uint endDate) {
+        ElectionDetails memory details;
+        return  (details.electionName, details.description, details.startDate, details.endDate);
+    }
+
+    function addVoters(string memory  _name, uint _voterId, uint _age, string memory _phone, string memory _password, string memory _pollingStation, string memory  _constituency,  string memory _region) public{ 
+        voters[votersCount] = Voter(votersCount, _name, _voterId, _age, _phone, _pollingStation, _constituency, bytes32(keccak256(abi.encodePacked(_password))), _region, false, false);
+        votersCount ++; 
+    }
+    
+    function getVoter(uint _id) public view returns(uint id, bytes32 _password){
+        for (uint i = 0; i < votersCount; i++) {
+            voters[i].voterId == _id;
+            return (voters[i].voterId, voters[i].password);
         }
-
-        if(!_email.match(regEx)){
-            return "Email must be valid";
-        }
     }
 
-    function election(string memory _name,  uint _startDate,  uint  _endDate) public {
-        owner = msg.sender;
-        electionName = _name;
-        startDate = _startDate;
-        endDate = _endDate;
+    function unHashPassword(string memory _password, uint _voterId) public view returns (bool) {
+        return keccak256(abi.encodePacked(_password)) == voters[_voterId].password;
     }
 
-    function addVoters(string memory  _name,  uint _age, string memory _phone, string memory _pollingStation, string memory  _constituency,  string memory _region) public {
-        voters[votersCount] = Voter(votersCount, _name, _age, _phone, _pollingStation, _constituency, _region, false, false);
-
-      votersCount ++;
-    }
-
-    function authorize(uint id, string memory voterID) private {
+    function authorize(uint id) private {
         require(!voters[id].voted);
         voters[id].authorized = true;
     }
 
     function addCandidate (string memory _name, string memory _party,  string memory _type) public {
-        // for (var i = 0; i < candidatesCount; i++) {
-        //     require(candidates[i].name !== _name)
-        // }
   
         candidates[candidatesCount] = Candidate(candidatesCount, _name, _party, _type, 0);
         candidatesCount ++;
